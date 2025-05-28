@@ -16,7 +16,7 @@ void* my_malloc(size_t size) {
 
     struct meta_block *meta_pointer = (struct meta_block *)address;
     meta_pointer->size = size;
-    meta_pointer->vacant = 99;
+    meta_pointer->vacant = 0;
     meta_pointer->next = NULL;
 
     return address + sizeof(struct meta_block);
