@@ -8,8 +8,11 @@ struct meta_block {
     int vacant;
 };
 
+void *BLOCK_HEAD = NULL;
+
 void* my_malloc(size_t size) {
     if (size == 0) { return NULL; }
+    if (BLOCK_HEAD == NULL) { BLOCK_HEAD = sbrk(0); }
 
     void* address = sbrk(size + sizeof(struct meta_block));
     if (address == (void *) -1) { return NULL; } // sbrk has failed
