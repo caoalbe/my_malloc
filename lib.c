@@ -11,15 +11,15 @@ struct meta_block {
 void* my_malloc(size_t size) {
     if (size == 0) { return NULL; }
 
-    void* output = sbrk(size + sizeof(struct meta_block));
-    if (output == (void *) -1) { return NULL; } // sbrk has failed
+    void* address = sbrk(size + sizeof(struct meta_block));
+    if (address == (void *) -1) { return NULL; } // sbrk has failed
 
-    struct meta_block *meta_pointer = (struct meta_block *)output;
+    struct meta_block *meta_pointer = (struct meta_block *)address;
     meta_pointer->size = size;
     meta_pointer->vacant = 99;
     meta_pointer->next = NULL;
 
-    return output + sizeof(struct meta_block);
+    return address + sizeof(struct meta_block);
 }
 
 void my_free(void* ptr) {
