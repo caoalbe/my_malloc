@@ -26,5 +26,6 @@ void* my_malloc(size_t size) {
 }
 
 void my_free(void* ptr) {
-
+    struct meta_block *meta_pointer = (struct meta_block *)ptr;
+    meta_pointer->vacant = 1;
 }
