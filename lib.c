@@ -14,7 +14,7 @@ void *BLOCK_HEAD = NULL;
 
 // Writes a meta block at ptr location
 // Returns usable memory address
-void* write_meta_block(void* address, size_t size, struct meta_block* prev, struct meta_block* next) {
+void* write_meta_block(void* address, size_t size, struct meta_block* prev, struct meta_block* next, int vacant) {
     if (address == NULL) {
         // Write block at end of heap
         address = sbrk(size + sizeof(struct meta_block));
@@ -25,7 +25,7 @@ void* write_meta_block(void* address, size_t size, struct meta_block* prev, stru
 
     struct meta_block *meta_pointer = (struct meta_block *)address;
     meta_pointer->size = size;
-    meta_pointer->vacant = 0;
+    meta_pointer->vacant = vacant;
     meta_pointer->next = next;
     meta_pointer->prev = prev;
     if (prev != NULL) { prev->next = address; }
@@ -38,7 +38,7 @@ void* my_malloc(size_t size) {
     if (size == 0) { return NULL; }
     if (BLOCK_HEAD == NULL) {
         // Initialize linked list
-        void* data_addr = write_meta_block(NULL, size, NULL, NULL);
+        void* data_addr = write_meta_block(NULL, size, NULL, NULL, 0);
         BLOCK_HEAD = data_addr - sizeof(struct meta_block);
         return data_addr;
     }
@@ -49,7 +49,14 @@ void* my_malloc(size_t size) {
     while (curr != NULL) {
         if (curr->vacant == 1 && size <= curr->size) {
             curr->vacant = 0;
-            // TODO: Truncate Block to Minimal Length
+            if (curr->size - size > sizeof(struct meta_block)) {
+                // Truncate Block to Minimal Length
+                void* new_meta_block = (void*) curr + sizeof(struct meta_block) + size;
+                size_t new_size = curr->size - size - sizeof(struct meta_block);
+                write_meta_block(new_meta_block, new_size, curr, curr->next, 1);
+                curr->size = size;
+            }
+
             return sizeof(struct meta_block) + (void *)curr;
         }
         prev = curr;
@@ -57,7 +64,7 @@ void* my_malloc(size_t size) {
     }
 
     // Create new block
-    return write_meta_block(NULL, size, prev, NULL);
+    return write_meta_block(NULL, size, prev, NULL, 0);
 }
 
 void my_free(void* ptr) {
