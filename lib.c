@@ -6,6 +6,7 @@
 struct meta_block {
     size_t size;
     struct meta_block* next;
+    struct meta_block* prev;
     int vacant;
 };
 
@@ -37,6 +38,7 @@ void* find_block(size_t size) {
     meta_pointer->size = size;
     meta_pointer->vacant = 0;
     meta_pointer->next = NULL;
+    meta_pointer->prev = (void*)prev;
 
     void* output = (void*)meta_pointer;
 
@@ -58,6 +60,7 @@ void* my_malloc(size_t size) {
         meta_pointer->size = size;
         meta_pointer->vacant = 0;
         meta_pointer->next = NULL;
+        meta_pointer->prev = NULL;
 
         return BLOCK_HEAD + sizeof(struct meta_block);
     }
@@ -76,5 +79,9 @@ void my_free(void* ptr) {
         meta_pointer->next = meta_pointer->next->next;
     }
 
-    // TODO: merge with predecessor if its also vacant
+    // merge with predecessor if its also vacant
+    if (meta_pointer->prev != NULL && meta_pointer->prev->vacant == 1) {
+        meta_pointer->prev->size = meta_pointer->prev->size + sizeof(struct meta_block) + meta_pointer->size;
+        meta_pointer->prev->next = meta_pointer->next;
+    }
 }
