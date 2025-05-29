@@ -20,6 +20,8 @@ void* find_block(size_t size) {
 
     while (curr != NULL) {
         if (curr->vacant == 1 && size <= curr->size) {
+            curr->vacant = 0;
+            // TODO: truncate block to minimal length
 
             return sizeof(struct meta_block) + (void *)curr;
         }
@@ -67,4 +69,12 @@ void* my_malloc(size_t size) {
 void my_free(void* ptr) {
     struct meta_block *meta_pointer = (struct meta_block *)(ptr - sizeof(struct meta_block));
     meta_pointer->vacant = 1;
+
+    // merge with successor if its also vacant
+    if (meta_pointer->next != NULL &&  meta_pointer->next->vacant == 1) {
+        meta_pointer->size = meta_pointer->size + sizeof(struct meta_block) + meta_pointer->next->size;
+        meta_pointer->next = meta_pointer->next->next;
+    }
+
+    // TODO: merge with predecessor if its also vacant
 }
