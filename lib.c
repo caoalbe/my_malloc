@@ -68,7 +68,7 @@ void* my_malloc(size_t size) {
 }
 
 void my_free(void* ptr) {
-    // TODO: Handle null pointer
+    if (ptr == NULL) { return; }
     struct meta_block *meta_pointer = (struct meta_block *)(ptr - sizeof(struct meta_block));
     meta_pointer->vacant = 1;
 
