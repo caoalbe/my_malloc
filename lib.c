@@ -12,18 +12,42 @@ struct meta_block {
 
 void *BLOCK_HEAD = NULL;
 
-// Finds a block with sufficient size;
-// if such a block doesnt exist; then allocate the necessary space with sbrk
-void* find_block(size_t size) {
+// Writes a meta block at ptr location
+// Returns usable memory address
+void* write_meta_block(void* address, size_t size, struct meta_block* prev, struct meta_block* next) {
+    if (address == NULL) {
+        // Write block at end of heap
+        address = sbrk(size + sizeof(struct meta_block));
+        if (address == (void *) -1) { return NULL; } // sbrk has failed
+    }
+
+    // TODO: Ensure that there is sufficient space to write
+    struct meta_block *meta_pointer = (struct meta_block *)address;
+    meta_pointer->size = size;
+    meta_pointer->vacant = 0;
+    meta_pointer->next = next;
+    meta_pointer->prev = prev;
+    if (prev != NULL) { prev->next = address; }
+
+    return address + sizeof(struct meta_block);
+}
+
+void* my_malloc(size_t size) {
+    if (size == 0) { return NULL; }
+    if (BLOCK_HEAD == NULL) {
+        // Initialize linked list
+        void* data_addr = write_meta_block(NULL, size, NULL, NULL);
+        BLOCK_HEAD = data_addr - sizeof(struct meta_block);
+        return data_addr;
+    }
+
     // Search linked list
     struct meta_block* prev = NULL;
     struct meta_block* curr = (struct meta_block*)BLOCK_HEAD;
-
     while (curr != NULL) {
         if (curr->vacant == 1 && size <= curr->size) {
             curr->vacant = 0;
             // TODO: truncate block to minimal length
-
             return sizeof(struct meta_block) + (void *)curr;
         }
         prev = curr;
@@ -31,42 +55,7 @@ void* find_block(size_t size) {
     }
 
     // Create new block
-    void* address = sbrk(size + sizeof(struct meta_block));
-    if (address == (void *) -1) { return NULL; } // sbrk has failed
-
-    struct meta_block *meta_pointer = (struct meta_block *)address;
-    meta_pointer->size = size;
-    meta_pointer->vacant = 0;
-    meta_pointer->next = NULL;
-    meta_pointer->prev = (void*)prev;
-
-    void* output = (void*)meta_pointer;
-
-    prev->next = output;
-
-    return output + sizeof(struct meta_block);
-}
-
-void* my_malloc(size_t size) {
-    if (size == 0) { return NULL; }
-    if (BLOCK_HEAD == NULL) {
-        // Initialize linked list
-        BLOCK_HEAD = sbrk(0); 
-
-        void* address = sbrk(size + sizeof(struct meta_block));
-        if (address == (void *) -1) { return NULL; } // sbrk has failed
-
-        struct meta_block *meta_pointer = (struct meta_block *)address;
-        meta_pointer->size = size;
-        meta_pointer->vacant = 0;
-        meta_pointer->next = NULL;
-        meta_pointer->prev = NULL;
-
-        return BLOCK_HEAD + sizeof(struct meta_block);
-    }
-
-    void* address = find_block(size);
-    return address;
+    return write_meta_block(NULL, size, prev, NULL);
 }
 
 void my_free(void* ptr) {
