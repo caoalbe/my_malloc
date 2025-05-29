@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 
 struct meta_block {
     size_t size;
@@ -19,9 +20,8 @@ void* write_meta_block(void* address, size_t size, struct meta_block* prev, stru
         // Write block at end of heap
         address = sbrk(size + sizeof(struct meta_block));
         if (address == (void *) -1) { return NULL; } // sbrk has failed
-    } else if (address + sizeof(struct meta_block) + size > sbrk(0)) {
-        // TODO: Handle insufficient space to write
     }
+    assert(address + sizeof(struct meta_block) + size <= sbrk(0)); // Ensures there is sufficient space to write
 
     struct meta_block *meta_pointer = (struct meta_block *)address;
     meta_pointer->size = size;
