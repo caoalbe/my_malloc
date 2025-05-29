@@ -1,7 +1,6 @@
 #include "lib.h"
 #include <stddef.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <assert.h>
 
 #define META_BYTE_SIZE sizeof(struct meta_block)
