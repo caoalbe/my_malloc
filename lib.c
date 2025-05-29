@@ -29,6 +29,7 @@ void* write_meta_block(void* address, size_t size, struct meta_block* prev, stru
     meta_pointer->next = next;
     meta_pointer->prev = prev;
     if (prev != NULL) { prev->next = address; }
+    if (next != NULL) { next->prev = address; }
 
     return address + sizeof(struct meta_block);
 }
