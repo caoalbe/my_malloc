@@ -19,9 +19,10 @@ void* write_meta_block(void* address, size_t size, struct meta_block* prev, stru
         // Write block at end of heap
         address = sbrk(size + sizeof(struct meta_block));
         if (address == (void *) -1) { return NULL; } // sbrk has failed
+    } else if (address + sizeof(struct meta_block) + size > sbrk(0)) {
+        // TODO: Handle insufficient space to write
     }
 
-    // TODO: Ensure that there is sufficient space to write
     struct meta_block *meta_pointer = (struct meta_block *)address;
     meta_pointer->size = size;
     meta_pointer->vacant = 0;
@@ -47,7 +48,7 @@ void* my_malloc(size_t size) {
     while (curr != NULL) {
         if (curr->vacant == 1 && size <= curr->size) {
             curr->vacant = 0;
-            // TODO: truncate block to minimal length
+            // TODO: Truncate Block to Minimal Length
             return sizeof(struct meta_block) + (void *)curr;
         }
         prev = curr;
@@ -59,6 +60,7 @@ void* my_malloc(size_t size) {
 }
 
 void my_free(void* ptr) {
+    // TODO: Handle null pointer
     struct meta_block *meta_pointer = (struct meta_block *)(ptr - sizeof(struct meta_block));
     meta_pointer->vacant = 1;
 
